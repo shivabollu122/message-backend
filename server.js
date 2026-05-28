@@ -30,10 +30,6 @@ app.get("/mgs/conversation/:myId/:otherId", async (req, res) => {
         const me = await coll.findById(req.params.myId);
         const other = await coll.findById(req.params.otherId);
 
-        console.log("me:", me.email);          // ← add this
-        console.log("other:", other.email);    // ← add this
-        console.log("me.receive:", me.receive); // ← add this
-
         const sent = me.sent
             .filter(m => m.to === other.email)
             .map(m => ({ from: "me", mgs: m.mgs }));
@@ -41,9 +37,6 @@ app.get("/mgs/conversation/:myId/:otherId", async (req, res) => {
         const received = me.receive
             .filter(m => m.from === other.email)
             .map(m => ({ from: "them", mgs: m.mgs }));
-
-        console.log("sent:", sent);        // ← add this
-        console.log("received:", received); // ← add this
 
         res.json({ sent, received });
 
