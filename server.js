@@ -25,6 +25,26 @@ app.get("/mgs",async(req,res)=>{
     res.json(one);
 })
 
+app.get("/mgs/conversation/:myId/:otherId", async (req, res) => {
+    try {
+        const me = await coll.findById(req.params.myId);
+        const other = await coll.findById(req.params.otherId);
+
+        const sent = me.sent
+            .filter(m => m.to === other.email)
+            .map(m => ({ from: "me", mgs: m.mgs }));
+
+        const received = me.receive
+            .filter(m => m.from === other.email)
+            .map(m => ({ from: "them", mgs: m.mgs }));
+
+        res.json({ sent, received });
+
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.get("/mgs/:id", async(req,res)=>{
     let one = await coll.findById(req.params.id);
     res.json(one);
