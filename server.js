@@ -21,12 +21,11 @@ let table = new mongoose.Schema({
 let coll = mongoose.model("mgs", table);
 
 // ─────────────────────────────────────────────
-// ONLINE PRESENCE — in-memory map (no DB needed)
+// ONLINE PRESENCE
 // ─────────────────────────────────────────────
-const onlineMap = new Map(); // userId -> lastSeen timestamp
-const ONLINE_THRESHOLD_MS = 45000; // 45 seconds
+const onlineMap = new Map();
+const ONLINE_THRESHOLD_MS = 45000;
 
-// POST /mgs/online — heartbeat (called every 30s from frontend)
 app.post("/mgs/online", (req, res) => {
     const { userId } = req.body;
     if (!userId) return res.status(400).json({ error: "userId required" });
@@ -34,14 +33,12 @@ app.post("/mgs/online", (req, res) => {
     res.json({ success: true });
 });
 
-// POST /mgs/offline — called on signout or tab close
 app.post("/mgs/offline", (req, res) => {
     const { userId } = req.body;
     if (userId) onlineMap.delete(userId);
     res.json({ success: true });
 });
 
-// GET /mgs/online — returns array of currently online userIds
 app.get("/mgs/online", (req, res) => {
     const now = Date.now();
     const onlineIds = [];
@@ -49,10 +46,24 @@ app.get("/mgs/online", (req, res) => {
         if (now - lastSeen <= ONLINE_THRESHOLD_MS) {
             onlineIds.push(userId);
         } else {
-            onlineMap.delete(userId); // auto-cleanup stale entries
+            onlineMap.delete(userId);
         }
     }
     res.json(onlineIds);
+});
+
+// ─────────────────────────────────────────────
+// ✅ CHECK EMAIL — used during signup only
+// Avoids fetching all profiles just to check duplicates
+// ─────────────────────────────────────────────
+app.post("/mgs/check-email", async (req, res) => {
+    try {
+        const { email } = req.body;
+        const existing = await coll.findOne({ email });
+        res.json({ exists: !!existing });
+    } catch (err) {
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
 // ─────────────────────────────────────────────
