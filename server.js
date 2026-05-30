@@ -53,8 +53,7 @@ app.get("/mgs/online", (req, res) => {
 });
 
 // ─────────────────────────────────────────────
-// ✅ CHECK EMAIL — used during signup only
-// Avoids fetching all profiles just to check duplicates
+// CHECK EMAIL — used during signup only
 // ─────────────────────────────────────────────
 app.post("/mgs/check-email", async (req, res) => {
     try {
@@ -99,9 +98,15 @@ app.get("/mgs/:id", async (req, res) => {
     res.json(one);
 });
 
+// ✅ Fixed — was missing res.json() so axios hung and threw error
 app.post("/mgs", async (req, res) => {
-    let data = new coll(req.body);
-    await data.save();
+    try {
+        let data = new coll(req.body);
+        await data.save();
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
 });
 
 app.delete("/mgs/:id", async (req, res) => {
